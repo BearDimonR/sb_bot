@@ -1,2 +1,2 @@
 # sb_bot
- Bot for SB NaUKMA
+## Telegram Bot for student organization SB NaUKMA.
