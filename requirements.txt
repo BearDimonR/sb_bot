@@ -1,7 +1,4 @@
 requests
-logging
 flask
-queue
-threading
 python-telegram-bot
 psycopg2
