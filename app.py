@@ -1,8 +1,14 @@
 import requests
 import logging
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import CommandHandler, MessageHandler, Filters, Dispatcher
+from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Bot, Update
 import psycopg2
+from queue import Queue
+from threading import Thread
+from flask import Flask, request
+
+
+app = Flask(__name__)
 
 
 TELEGRAM_TOKEN = "1481681024:AAExedkDJ6Z1xkYVLIiszZsB-vOKKBjXlh4"  # Telegram token
@@ -231,37 +237,54 @@ def delete_4_messages(update):
         requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteMessage?chat_id={chat_id}&message_id={last_message_id-i}")
 
 
+@app.route(f'/{TELEGRAM_TOKEN}', methods=['GET', 'POST'])
+def webhook():
+    if request.method == "POST":
+        # retrieve the message in JSON and then transform it to Telegram object
+        update = Update.de_json(request.get_json(force=True))
+        print(update)
+        logger.info("Update received! "+ update.message.text)
+        dp.process_update(update)
+        update_queue.put(update)
+        return "OK"
+    else:
+        return "BAD"
+
+
 def main():
     # Boot up the bot with const TELEGRAM_TOKEN
-    updater = Updater(TELEGRAM_TOKEN, use_context=True)
 
-    # Prepare bot to register handlers
-    dp = updater.dispatcher
 
     # Different commands
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("about", about))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("spiv", spiv))
-
     # On message
     dp.add_handler(MessageHandler(Filters.text, echo))
 
     # log all errors
     dp.add_error_handler(error)
 
+    thread = Thread(target=dp.start, name='dp')
+    thread.start()
     # Start the Bot
-    updater.start_polling()
+    #updater.start_polling()
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
-    updater.idle()
+    #updater.idle()
 
 
 if __name__ == '__main__':
+    bot = Bot(TELEGRAM_TOKEN)
+    bot.setWebhook(f"https://sbbotapp.herokuapp.com/{TELEGRAM_TOKEN}")
+    update_queue = Queue()
+    dp = Dispatcher(bot, update_queue)
     connection = psycopg2.connect(
         "postgres://akyuttvqhqxwkh:15c04c5d000cb821bd87df571aaecbd79ee96ad5ecb0509b57e1fbe7a9025dcf@ec2-54-220-229-215.eu-west-1.compute.amazonaws.com:5432/dblpl7cuuvkg9",
         sslmode='require')
     cursor = connection.cursor()
     main()
+    app.run()
