@@ -1,4 +1,4 @@
 requests
 logging
-telegram
+python-telegram-bot
 psycopg2
