@@ -1,5 +1,4 @@
 requests
-flask
-telebot
-regex
-pyTelegramBotAPI
+logging
+python-telegram-bot
+psycopg2
