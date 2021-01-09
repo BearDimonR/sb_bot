@@ -1,11 +1,12 @@
 import requests
 import logging
-from telegram.ext import CommandHandler, MessageHandler, Filters, Dispatcher
+from telegram.ext import CommandHandler, MessageHandler, Filters, Dispatcher, Updater
 from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Bot, Update
 import psycopg2
 from queue import Queue
 from threading import Thread
 from flask import Flask, request
+import os
 
 
 app = Flask(__name__)
@@ -243,7 +244,7 @@ def webhook():
         # retrieve the message in JSON and then transform it to Telegram object
         update = Update.de_json(request.get_json(force=True))
         print(update)
-        logger.info("Update received! "+ update.message.text)
+        logger.info("Update received! " + update.message.text)
         dp.process_update(update)
         update_queue.put(update)
         return "OK"
@@ -278,13 +279,18 @@ def main():
 
 
 if __name__ == '__main__':
-    bot = Bot(TELEGRAM_TOKEN)
-    bot.setWebhook(f"https://sbbotapp.herokuapp.com/{TELEGRAM_TOKEN}")
+    PORT = int(os.environ.get('PORT', '8443'))
+    updater = Updater(TELEGRAM_TOKEN)
+
+    updater.start_webhook(listen="0.0.0.0",
+                          port=PORT,
+                          url_path=TELEGRAM_TOKEN)
+    updater.bot.setWebhook(f"https://sbbotapp.herokuapp.com/{TELEGRAM_TOKEN}")
     update_queue = Queue()
-    dp = Dispatcher(bot, update_queue)
+    dp = Dispatcher(updater.bot, update_queue)
     connection = psycopg2.connect(
         "postgres://akyuttvqhqxwkh:15c04c5d000cb821bd87df571aaecbd79ee96ad5ecb0509b57e1fbe7a9025dcf@ec2-54-220-229-215.eu-west-1.compute.amazonaws.com:5432/dblpl7cuuvkg9",
         sslmode='require')
     cursor = connection.cursor()
     main()
-    app.run()
+    app.run(threaded=True)
