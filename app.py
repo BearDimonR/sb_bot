@@ -81,7 +81,7 @@ def echo(update, context):
                 del item
                 break
         delete_2_messages(update)
-        help(update, context)
+        #help(update, context)
     # Методи пошуку чи категорії
     elif update.message.text == "Пошук пісні":
         delete_2_messages(update)
