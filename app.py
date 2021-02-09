@@ -10,7 +10,7 @@ import psycopg2
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = "1481681024:AAExedkDJ6Z1xkYVLIiszZsB-vOKKBjXlh4"  # Telegram token
+TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']  # Telegram token
 switch_array = []  # Special array for search methods (назва, виконавець, текст) [{"switch": "Назва методу пошуку", "chat_id": chat_id}, ...]
 messages_to_be_deleted = []  # Записуємо сюди останні повідомлення від бота до кожного chat_id [{"chat_id": chat_id, "last_msg_id": msg_id}, ...]
 
@@ -256,6 +256,8 @@ def delete_2_messages(update):
         for msg in messages_to_be_deleted:
             if msg["chat_id"] == chat_id:
                 bot_message_id = msg["last_msg_id"]
+                del msg
+                break
     except:
         bot_message_id = update["message"]["message_id"] - 1
     requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteMessage?chat_id={chat_id}&message_id={last_message_id}")
@@ -299,8 +301,7 @@ if __name__ == '__main__':
     launch_dispatcher()        # Preparing and launching the Dispatcher
     bot.setWebhook(f"https://sbbotapp.herokuapp.com/{TELEGRAM_TOKEN}")  # Setting the WebHook for bot to receive updates
     try:
-        #db_url = os.environ['DATABASE_URL']
-        db_url = "postgres://jsflplcerunvml:7ea5c96a2749879d490d341809f09614f2121eaf4f29ed98f39dda6e1ddb4841@ec2-54-78-45-84.eu-west-1.compute.amazonaws.com:5432/d4eopvjlccalgh"
+        db_url = os.environ['DATABASE_URL']
         connection = psycopg2.connect(db_url, sslmode='require')  # Connecting to Heroku PostgresSQL
         cursor = connection.cursor()  # Setting up the cursor
     except:
