@@ -338,7 +338,7 @@ if __name__ == '__main__':
     update_queue = Queue()     # Creating the Queue for the Dispatcher
     dp = Dispatcher(bot, update_queue)  # Creating the Dispatcher object
     launch_dispatcher()        # Preparing and launching the Dispatcher
-    bot.deleteWebhook()
+    bot.deleteWebhook(drop_pending_updates=True)
     bot.setWebhook(f"https://sbbotapp.herokuapp.com/{TELEGRAM_TOKEN}")  # Setting the WebHook for bot to receive updates
     try:
         db_url = os.environ['DATABASE_URL']
