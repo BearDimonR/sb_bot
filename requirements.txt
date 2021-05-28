@@ -1,3 +1,4 @@
-requests
+flask
 python-telegram-bot
-psycopg2
+requests
+pygsheets
